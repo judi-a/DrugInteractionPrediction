@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Judi A's Drug Predictor Agent</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)),
+                        url("{{ url_for('static', filename='images/drug_background.jpg') }}");
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            min-height: 100vh;
+            color: white;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            padding: 50px 0;
+        }
+
+        .header h1 {
+            font-size: 3em;
+            margin-bottom: 20px;
+        }
+
+        .content {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 15px;
+            margin: 20px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+
+        .button:hover {
+            background-color: #45a049;
+        }
+       
+        .hidden {
+            display: none;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Welcome to My Drug Interaction Predictor Page</h1>
+            <p>Here you can relax and let my agents do the job</p>
+        </div>
+
+        <div class="content">
+            <div class="card">
+                <h2>Description</h2>
+                <p>This agent extracts a drug and its target from your porosal then predicts their interactions.</p>
+            </div>
+            <div class="card">
+                <h1>Please enter your proposal</h1>
+                <form action= "/extractDrugNames" method="POST">
+                    <p><label for="proposal">Make sure your text has a drug name and its target:</label></p>
+                    <p><textarea name="proposal" rows="4" cols="50" required></textarea></p>
+                    <button type="submit" class="button" >Submit</button>
+                </form>
+            </div>
+        
+            <div  class="card">
+                <p id="result"></p>
+                <h2>Results:</h2>
+                <h3>Your Drug is: </h3>
+                <p>{{ drug_names}}</p>
+                <h3> Your Traget is: </h3>
+                <p>{{ target_names}}</p>
+                <h3>The score  is: </h3>
+                <p>{{ score}}</p>
+            </div>
+
+            
+            <div class="card">
+                <h2>Contact Us</h2>
+                <p>Available after school and before bed 3-9pm PST</p>
+                <p>Phone: (650) 9292</p>
+                <p>Email: judi.abdelrazik@gmail.com</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
