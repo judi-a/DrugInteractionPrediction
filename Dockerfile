@@ -17,7 +17,7 @@ RUN pip install --no-cache-dir git+https://github.com/bp-kelley/descriptastorus 
 #RUN rm /bin/sh && ln -s /bin/bash /bin/sh
 
 COPY . /app
-
+ENV PYTHONUNBUFFERED=1
 
 EXPOSE 9999
 

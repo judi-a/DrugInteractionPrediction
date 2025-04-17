@@ -81,6 +81,8 @@ def get_multiple_dti_scores(
         return 0
 
     X_repurpose, drug_name, drug_cid = load_broad_repurposing_hub(SAVE_PATH)
+   
+    print ("passed save path")
     if is_smiles:
         idx = X_repurpose == drug
     else:
@@ -106,7 +108,7 @@ def get_dti_score(drug: str, target: str, is_smiles=False, is_sequence=False) ->
 
     if not is_sequence:
         try:
-            target_sequence = get_target_sequence_test(target)
+            target_sequence = get_target_sequence(target)
         except ValueError:
             print(
                 f"Logging: Returning 0 because target sequence for '{target}' was not found."
@@ -124,7 +126,12 @@ def get_dti_score(drug: str, target: str, is_smiles=False, is_sequence=False) ->
     print (target_sequence)
     print ("passed rest api")
     #Use the broad data to get the drug SMILE 
-    X_repurpose, drug_name, drug_cid = load_broad_repurposing_hub(SAVE_PATH)
+    #X_repurpose, drug_name, drug_cid = load_broad_repurposing_hub(SAVE_PATH)
+
+    X_repurpose, drug_name, drug_cid = load_broad_repurposing_hub_override(SAVE_PATH)
+    print ("done with loading broad data")
+
+   
     if is_smiles:
         idx = X_repurpose == drug
     else:
@@ -137,6 +144,7 @@ def get_dti_score(drug: str, target: str, is_smiles=False, is_sequence=False) ->
         X_repurpose[idx], [target_sequence], net, drug_name[idx], [target]
     )
     return res[0]
+
 
 def get_target_sequence_test(target: str) -> str:
     print ("Getting the amino acid sequence of the target")
@@ -177,6 +185,50 @@ def get_target_sequence(target: str) -> str:
     except requests.RequestException as e:
         raise RuntimeError(f"API request failed: {e}")
 
+def prediction_agent(drug: str, target: str, is_smiles=False, is_sequence=False) -> float:
+    if not os.path.exists(SAVE_PATH):
+        os.makedirs(SAVE_PATH)
+
+    if not is_sequence:
+        try:
+            target_sequence = get_target_sequence(target)
+        except ValueError:
+            print(
+                f"Logging: Returning 0 because target sequence for '{target}' was not found."
+            )
+            return 0
+
+    else:
+        target_sequence = target
+
+    print ("Target sequence is "+ target_sequence)
+    '''try:
+        net = models.model_pretrained(model="MPNN_CNN_BindingDB")
+        print("The model file is ")
+        print (net)
+    except zipfile.BadZipFile:
+        print("Error: The downloaded file is not a valid zip file.")
+        return 0
+    '''
+    #load pretrained model on BindingDB
+    net = models.model_pretrained('models/model_MPNN_CNN/')
+    print ("loaded the model")
+    #Use the broad data to get the drug SMILE 
+    #X_repurpose, drug_name, drug_cid = load_broad_repurposing_hub(SAVE_PATH)
+    X_repurpose, drug_name, drug_cid = load_broad_repurposing_hub_override("./data")
+    print ("loaded broad data")
+    if is_smiles:
+        idx = X_repurpose == drug
+    else:
+        idx = drug_name == drug
+    if not any(idx):
+        print(f"Logging: Returning 0 because drug '{drug}' was not found.")
+        return 0
+    print(f"\n The drug SMILE sequence is {X_repurpose[idx]}")
+    res = models.virtual_screening(
+        X_repurpose[idx], [target_sequence], net, drug_name[idx], [target]
+    )
+    return res[0]
 
 def medical_agent(drug_names):
 
@@ -196,6 +248,11 @@ def medical_agent(drug_names):
     )
   return response.choices[0].message.content
 
+def load_broad_repurposing_hub_override(path = './data'):
+    df = pd.read_csv(path+"/broad.tab", sep = '\t')
+    print ("loaded broad data")
+    df = df.fillna('UNK')
+    return df.smiles.values, df.title.values, df.cid.values.astype(str)
 
 def test(proposal):
     print ("Ok input received")
