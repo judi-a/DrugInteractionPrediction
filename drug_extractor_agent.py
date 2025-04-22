@@ -7,6 +7,8 @@ from DeepPurpose import DTI as models
 from DeepPurpose.dataset import *
 from DeepPurpose.utils import *
 from utils import get_compound_name, get_target_name_from_uniprot
+from DeepPurpose.oneliner import repurpose 
+
 
 SAVE_PATH = "./saved_path"
 
@@ -54,16 +56,16 @@ def target_names_extractor_agent(text):
 def get_multiple_dti_scores(
     drug: str,
     target_names: list,
-    proba: float,
     is_smiles=False,
     is_sequence=False,
 ) -> float:
-    if not os.path.exists(SAVE_PATH):
-        os.makedirs(SAVE_PATH)
-
+   
+    print (target_names)
     if not is_sequence:
+        print ("in the not is_sequence")
         target_sequences = []
         for target in target_names:
+            print (target)
             try:
                 target_sequences.append(get_target_sequence(target))
             except ValueError:
@@ -74,13 +76,11 @@ def get_multiple_dti_scores(
     else:
         target_sequences = target_names
 
-    try:
-        net = models.model_pretrained(model="MPNN_CNN_BindingDB")
-    except zipfile.BadZipFile:
-        print("Error: The downloaded file is not a valid zip file.")
-        return 0
-
-    X_repurpose, drug_name, drug_cid = load_broad_repurposing_hub(SAVE_PATH)
+    #load pretrained model on BindingDB
+    net = models.model_pretrained('models/model_MPNN_CNN/')
+    print ("loaded the model")
+    #Use the broad data to get the drug SMILE 
+    X_repurpose, drug_name, drug_cid = load_broad_repurposing_hub_override("./data")
    
     print ("passed save path")
     if is_smiles:
@@ -99,95 +99,12 @@ def get_multiple_dti_scores(
     )
     #squared_numbers = [x * proba for x in res]
     #average = sum(squared_numbers) / len(squared_numbers)
-    return drug, proba, res
+
+
+    return res
 
 
 def get_dti_score(drug: str, target: str, is_smiles=False, is_sequence=False) -> float:
-    if not os.path.exists(SAVE_PATH):
-        os.makedirs(SAVE_PATH)
-
-    if not is_sequence:
-        try:
-            target_sequence = get_target_sequence(target)
-        except ValueError:
-            print(
-                f"Logging: Returning 0 because target sequence for '{target}' was not found."
-            )
-            return 0
-
-    else:
-        target_sequence = target
-
-    try:
-        net = models.model_pretrained(model="MPNN_CNN_BindingDB")
-    except zipfile.BadZipFile:
-        print("Error: The downloaded file is not a valid zip file.")
-        return 0
-    print (target_sequence)
-    print ("passed rest api")
-    #Use the broad data to get the drug SMILE 
-    #X_repurpose, drug_name, drug_cid = load_broad_repurposing_hub(SAVE_PATH)
-
-    X_repurpose, drug_name, drug_cid = load_broad_repurposing_hub_override(SAVE_PATH)
-    print ("done with loading broad data")
-
-   
-    if is_smiles:
-        idx = X_repurpose == drug
-    else:
-        idx = drug_name == drug
-    if not any(idx):
-        print(f"Logging: Returning 0 because drug '{drug}' was not found.")
-        return 0
-    print(f"The drug SMILE sequence is {X_repurpose[idx]}")
-    res = models.virtual_screening(
-        X_repurpose[idx], [target_sequence], net, drug_name[idx], [target]
-    )
-    return res[0]
-
-
-def get_target_sequence_test(target: str) -> str:
-    print ("Getting the amino acid sequence of the target")
-    base_url = "https://rest.uniprot.org/uniprotkb/search"
-    print ("base url assigned")
-    print ("Target is "+ target)
-    params = {
-        "query": f"gene:{target} AND organism_id:9606",
-        "format": "json",
-        "fields": "sequence",
-    }
-    print ("params are" )
-    print (params)
-    return params
-
-def get_target_sequence(target: str) -> str:
-    print ("Getting the amino acod sequence of the target")
-    base_url = "https://rest.uniprot.org/uniprotkb/search"
-
-    params = {
-        "query": f"gene:{target} AND organism_id:9606",
-        "format": "json",
-        "fields": "sequence",
-    }
-    try:
-        response = requests.get(base_url, params=params)
-        response.raise_for_status()
-
-        data = response.json()
-
-        if not data["results"]:
-            raise ValueError(f"No sequence found for target '{target}'")
-
-        sequence = data["results"][0]["sequence"]["value"]
-        print(f"The amino acid sequence of the target is {sequence}")
-        return sequence
-
-    except requests.RequestException as e:
-        raise RuntimeError(f"API request failed: {e}")
-
-def prediction_agent(drug: str, target: str, is_smiles=False, is_sequence=False) -> float:
-    if not os.path.exists(SAVE_PATH):
-        os.makedirs(SAVE_PATH)
 
     if not is_sequence:
         try:
@@ -214,7 +131,6 @@ def prediction_agent(drug: str, target: str, is_smiles=False, is_sequence=False)
     net = models.model_pretrained('models/model_MPNN_CNN/')
     print ("loaded the model")
     #Use the broad data to get the drug SMILE 
-    #X_repurpose, drug_name, drug_cid = load_broad_repurposing_hub(SAVE_PATH)
     X_repurpose, drug_name, drug_cid = load_broad_repurposing_hub_override("./data")
     print ("loaded broad data")
     if is_smiles:
@@ -228,7 +144,56 @@ def prediction_agent(drug: str, target: str, is_smiles=False, is_sequence=False)
     res = models.virtual_screening(
         X_repurpose[idx], [target_sequence], net, drug_name[idx], [target]
     )
+
     return res[0]
+
+
+def get_target_sequence(target: str) -> str:
+    print ("Getting the amino acod sequence of the target")
+    base_url = "https://rest.uniprot.org/uniprotkb/search"
+
+    params = {
+        "query": f"gene:{target} AND organism_id:9606",
+        "format": "json",
+        "fields": "sequence",
+    }
+    try:
+        response = requests.get(base_url, params=params)
+        response.raise_for_status()
+
+        data = response.json()
+
+        if not data["results"]:
+            raise ValueError(f"No sequence found for target '{target}'")
+
+        sequence = data["results"][0]["sequence"]["value"]
+        print(f"The amino acid sequence of the target is {sequence}")
+        return sequence
+
+    except requests.RequestException as e:
+        raise RuntimeError(f"API request failed: {e}")
+
+def prediction_agent(drug_names: str, target_names: str, is_smiles=False, is_sequence=False) -> float:
+    print((target_names))
+    print ("their length is ")
+    print (len(target_names.split(",")))
+    if len(target_names.split(",")) > 1: #multiple targets detected 
+        print ("multiple targets, calling get_multiple_dti")
+        multi_targets = target_names.split(",")
+        result = get_multiple_dti_scores(drug_names, multi_targets)
+    else:
+        print ("one target, calling get_dti")
+        result = get_dti_score(drug_names, target_names)
+    if result is not None:
+        print("Result of DTI analysis:")
+        print(result)
+        return result
+    else:
+        print("DTI analysis failed due to an error.")
+
+
+    ####
+ 
 
 def medical_agent(drug_names):
 
@@ -254,10 +219,13 @@ def load_broad_repurposing_hub_override(path = './data'):
     df = df.fillna('UNK')
     return df.smiles.values, df.title.values, df.cid.values.astype(str)
 
-def test(proposal):
-    print ("Ok input received")
-    return ("This should be the result")
-
+'''def repurpose_agent(target_name_ str):
+   print ("In Drug repurpoes")
+   target_sequence = get_target_sequence(target)
+   oneliner.repurpose(target = target, 
+                    target_name = target_name, 
+                    save_dir = './save_folder',
+                    pretrained_dir = './save_folder/pretrained_models/DeepPurpose_BindingDB/')
 
 def main():
   proposal = input("Tell me about your proposal:")
@@ -285,7 +253,7 @@ def main():
   #medical_usage = medical_agent(drug_names)
   #print("\n These drugs could be helpful in:")
   #print(medical_usage)
-
+'''
 
 def extractor_call(proposal):
   #proposal = input("Tell me about your proposal:")

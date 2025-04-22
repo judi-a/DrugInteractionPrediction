@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, render_template, request
 from flask_cors import CORS
-from drug_extractor_agent import drug_names_extractor_agent, target_names_extractor_agent, prediction_agent
+from drug_extractor_agent import drug_names_extractor_agent, target_names_extractor_agent, prediction_agent, get_dti_score, get_multiple_dti_scores
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
@@ -13,29 +13,46 @@ def index():
 @app.route('/extractDrugNames', methods=["GET", "POST"])
 def extractDrugNames():
     if request.method == "POST":
-        proposal = request.form.get('proposal')
-        print (proposal)
-        print ("Testing printing proposal drugs", flush = True)
-        #drug_names = "Aspirin"
-        drug_names = drug_names_extractor_agent(proposal)
-        print("\n The proposal is: ")
-        print (proposal)
-        print("\n The drugs you are using in this proposal are: ")
-        print (drug_names)
-        # Call the agent to extract target names
-        #target_names = "Cox1"
-        target_names = target_names_extractor_agent(proposal)
-        print("\n The target proteins that the above drugs are binding to in this proposal are here in app.py: ")
-        print (target_names)
-        score = prediction_agent(drug_names, target_names)
-        score = round(score, 1)
+        try:
+            show_section = True
+            proposal = request.form.get('proposal')
+            print (proposal)
+            print ("Testing printing proposal drugs", flush = True)
+            #drug_names = "Aspirin"
+            drug_names = drug_names_extractor_agent(proposal)
+            print("\n The proposal is: ")
+            print (proposal)
+            print("\n The drugs you are using in this proposal are: ")
+            print (drug_names)
+            # Call the agent to extract target names
+            #target_names = "Cox1, COX2"
+            target_names = target_names_extractor_agent(proposal)
+            print("\n The target proteins that the above drugs are binding to in this proposal are here in app.py: ")
+            print (target_names)
+            score = prediction_agent(drug_names, target_names)
+            
+        # return render_template("index.html", drug_names=drug_names, target_names=target_names, score=score)
+        
+            drugTarget = []
+            if isinstance(score, (int, float)):
+                print ("it is a float")
+                #scorelist.append = str(round(score,2))
+                drugTarget.append({'Drug':drug_names,'Target':target_names,'Score':round(score,2)})
 
-        return render_template("index.html", drug_names=drug_names, target_names=target_names, score=score)
-    
-    
+            else:
+                for i in range(len(score)):
+                    print ("Item number ")
+                    print (i)
+                    print (target_names[i])
+                    print (score[i])
+                    drugTarget.append({'Drug':drug_names,'Target':target_names.split(",")[i],'Score':round(score[i],2)})
+
+            return render_template("index.html", drug_names=drug_names, target_names=target_names, score=score,show_section=show_section, drugTarget=drugTarget)
+        except Exception as e:
+            print(f"Error: {e}")
+            return render_template('wrong_index.html', error=str(e)), 500
 
     return render_template("index.html")
-
 
 
 if __name__ == '__main__':

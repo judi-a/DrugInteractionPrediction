@@ -46,6 +46,7 @@
             border-radius: 10px;
             margin-bottom: 20px;
             transition: transform 0.3s ease;
+            
         }
 
         .card:hover {
@@ -93,7 +94,8 @@
                 </form>
             </div>
         
-            <div  class="card">
+
+            <div  class="card section {% if not show_section %}hidden{% endif %}">
                 <p id="result"></p>
                 <h2>Results:</h2>
                 <h3>Your Drug is: </h3>
@@ -103,15 +105,42 @@
                 <h3>The score  is: </h3>
                 <p>{{ score}}</p>
             </div>
+            <div  class="card section {% if not show_section %}hidden{% endif %}">
+            <table border="1">
+                <thead>
+                  <tr>
+                    <th>Rank</th>
+                    <th>Drug</th>
+                    <th>Target</th>
+                    <th>Score</th>
+                  </tr>
+                </thead>
+                <tbody>
+          
+                    {% for dt in drugTarget %}
+                    <tr>
+                      <td>{{ loop.index }}</td>  <!-- loop.index gives 1-based index -->
+                      <td>{{ dt.Drug }}</td>
+                      <td>{{ dt.Target }}</td>
+                      <td>{{ dt.Score }}</td>
+                    </tr>
+                    {% endfor %}
+          
 
-            
+                </tbody>
+              </table>
+              </div>
+
             <div class="card">
                 <h2>Contact Us</h2>
                 <p>Available after school and before bed 3-9pm PST</p>
                 <p>Phone: (650) 9292</p>
                 <p>Email: judi.abdelrazik@gmail.com</p>
             </div>
+            
         </div>
     </div>
 </body>
 </html>
+
+
