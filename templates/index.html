@@ -128,9 +128,36 @@
           
 
                 </tbody>
+
               </table>
               </div>
-
+              <div  class="card section {% if not show_section %}hidden{% endif %}">
+                <table border="1">
+                    <thead>
+                      <tr>
+                        <th>Rank</th>
+                        <th>Drug</th>
+                        <th>Target</th>
+                        <th>Score</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+              
+                        {% for dt in drugRepurpose %}
+                        <tr>
+                          <td>{{ loop.index }}</td>  <!-- loop.index gives 1-based index -->
+                          <td>{{ dt.Drug }}</td>
+                          <td>{{ dt.Target }}</td>
+                          <td>{{ dt.Score }}</td>
+                        </tr>
+                        {% endfor %}
+              
+    
+                    </tbody>
+    
+                  </table>
+                  </div>
+    
             <div class="card">
                 <h2>Contact Us</h2>
                 <p>Available after school and before bed 3-9pm PST</p>

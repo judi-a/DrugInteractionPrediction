@@ -4,10 +4,15 @@ import zipfile
 
 import requests
 from DeepPurpose import DTI as models
+from DeepPurpose import oneliner
 from DeepPurpose.dataset import *
 from DeepPurpose.utils import *
 from utils import get_compound_name, get_target_name_from_uniprot
 from DeepPurpose.oneliner import repurpose 
+import pandas as pd
+import numpy as np
+from prettytable import PrettyTable
+import pickle 
 
 
 SAVE_PATH = "./saved_path"
@@ -194,6 +199,137 @@ def prediction_agent(drug_names: str, target_names: str, is_smiles=False, is_seq
 
     ####
  
+def repurpose_agent(target_names):
+    print((target_names))
+    print ("their length is ")
+    print (len(target_names.split(",")))
+    if len(target_names.split(",")) > 1: #multiple targets detected 
+        print ("multiple targets, calling get_multiple_dti")
+        multi_targets = target_names.split(",")
+        #result = get_multiple_dti_scores(drug_names, multi_targets)
+    else:
+        print ("one target")
+        target_sequence = get_target_sequence( target_names)
+        print (target_sequence)
+        result = repurpose_override(target = target_sequence, target_name=target_names)
+        print ("Done with repurpose")
+        print (result)
+        return result
+    
+
+def repurpose_override(target, target_name,
+                       finetune_epochs = 10,
+					finetune_LR = 0.001,
+					finetune_batch_size = 32,
+					convert_y = True,
+					subsample_frac = 1,
+					pretrained = True,
+					split = 'random',
+					frac = [0.7,0.1,0.2],
+					agg = 'agg_mean_max',
+					output_len = 30):
+    
+    X_repurpose, _, drug_names = load_broad_repurposing_hub_override()
+
+    pretrained_model_names = ['model_MPNN_CNN'] #, 'model_CNN_CNN']
+    #pretrained_model_names = [['MPNN', 'CNN'], ['CNN','CNN'], ['Morgan', 'CNN'], ['Morgan', 'AAC'], ['Daylight', 'AAC']]
+    y_preds_models = []
+    print('Beginning to load the pretrained models...')
+    for idx, model_name in enumerate(pretrained_model_names):
+
+        model = models.model_pretrained('models/'+model_name)
+        print ("Done with model loading")
+        y_pred = models.virtual_screening(X_repurpose, target, model, drug_names, target_name, convert_y = convert_y, verbose = False)
+        y_preds_models.append(y_pred)
+        print('Predictions from model ' + str(idx + 1) + ' with drug encoding ' + model_name[0] + ' and target encoding ' + model_name[1] + ' are done...')
+        print('-------------')
+        
+    print('models prediction finished...')
+    print('aggregating results...')
+    
+    if agg == 'mean':
+        y_pred = np.mean(y_preds_models, axis = 0)
+    elif agg == 'max_effect':
+        if convert_y:        
+            y_pred = np.min(y_preds_models, axis = 0)
+        else:
+            y_pred = np.max(y_preds_models, axis = 0)
+    elif agg == 'agg_mean_max':
+        if convert_y:        
+            y_pred = (np.min(y_preds_models, axis = 0) + np.mean(y_preds_models, axis = 0))/2
+        else:
+            y_pred = (np.max(y_preds_models, axis = 0) + np.mean(y_preds_models, axis = 0))/2          
+
+    print("Finished repurposing, show print now ")
+    fo = os.path.join("result/", "repurposing.txt")
+    print_list = []
+    
+    with open(fo, 'w') as fout:
+
+        print('---------------')
+        if target_name is not None:
+            print('Drug Repurposing Result for ' + target_name)
+
+        if model.binary:
+            table_header = ["Rank", "Drug Name", "Target Name", "Interaction", "Probability"]
+        else:
+            # Regression
+            table_header = ["Rank", "Drug Name", "Target Name", "Binding Score"]
+
+        table = PrettyTable(table_header)
+        print_list = []
+
+        if drug_names is not None:
+            f_d = max([len(o) for o in drug_names]) + 1
+            for i in range(len(y_pred)):
+                if model.binary:
+                    if y_pred[i] > 0.5:
+                        string_lst = [drug_names[i], target_name, "YES", "{0:.2f}".format(y_pred[i])]
+                    else:
+                        string_lst = [drug_names[i], target_name, "NO", "{0:.2f}".format(y_pred[i])]
+                else:
+                    # Regression: Rank, Drug Name, Target Name, Binding Score
+                    string_lst = [drug_names[i], target_name, "{0:.2f}".format(y_pred[i])]
+                    string = 'Drug ' + '{:<{f_d}}'.format(drug_names[i], f_d=f_d) + \
+                            ' predicted to have binding affinity score ' + "{0:.2f}".format(y_pred[i])
+                print_list.append((string_lst, y_pred[i]))
+
+        # Sorting logic
+        if convert_y:
+            print_list.sort(key=lambda x: x[1])
+        else:
+            print_list.sort(key=lambda x: x[1], reverse=True)
+
+        # Strip scores and keep just strings
+        print_list = [i[0] for i in print_list]
+
+        for idx, lst in enumerate(print_list):
+            lst = [str(idx + 1)] + lst
+            table.add_row(lst)
+            
+
+        fout.write(table.get_string())
+
+    # Read and display top results
+    with open(fo, 'r') as fin:
+        lines = fin.readlines()
+        for idx, line in enumerate(lines):
+            if idx < output_len + 3:
+                print(line, end='')
+            else:
+                print('Checkout ' + fo + ' for the whole list')
+                break
+        print()
+
+    # Save results to pickle
+    #with open(os.path.join("result/", 'output_list.pkl'), 'wb') as f:
+    #    pickle.dump(print_list, f, pickle.HIGHEST_PROTOCOL)
+
+    return table.rows[:output_len]
+
+
+
+
 
 def medical_agent(drug_names):
 
@@ -219,41 +355,6 @@ def load_broad_repurposing_hub_override(path = './data'):
     df = df.fillna('UNK')
     return df.smiles.values, df.title.values, df.cid.values.astype(str)
 
-'''def repurpose_agent(target_name_ str):
-   print ("In Drug repurpoes")
-   target_sequence = get_target_sequence(target)
-   oneliner.repurpose(target = target, 
-                    target_name = target_name, 
-                    save_dir = './save_folder',
-                    pretrained_dir = './save_folder/pretrained_models/DeepPurpose_BindingDB/')
-
-def main():
-  proposal = input("Tell me about your proposal:")
-  # Call the agent to extract drug names
-  drug_names = drug_names_extractor_agent(proposal)
-  print("\n The drugs you are using in this proposal are: ")
-  print (drug_names)
-  # Call the agent to extract target names
-  target_names = target_names_extractor_agent(proposal)
-  print("\n The target proteins that the above drugs are binding to in this proposal are: ")
-  print (target_names)
-  #predict biding score between drug and target
-  if len(targets > 1): #multiple targets detected 
-    multi_targets = targets.split(",")
-    result = get_multiple_dti_scores(drug_names, multi_targets)
-  else:
-     result = get_dti_score(drug_names, target_names)
-  if result is not None:
-    print("Result of DTI analysis:")
-    print(result)
-  else:
-    print("DTI analysis failed due to an error.")
-
-
-  #medical_usage = medical_agent(drug_names)
-  #print("\n These drugs could be helpful in:")
-  #print(medical_usage)
-'''
 
 def extractor_call(proposal):
   #proposal = input("Tell me about your proposal:")
