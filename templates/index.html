@@ -94,44 +94,52 @@
                 </form>
             </div>
         
-
             <div  class="card section {% if not show_section %}hidden{% endif %}">
-                <p id="result"></p>
-                <h2>Results:</h2>
-                <h3>Your Drug is: </h3>
-                <p>{{ drug_names}}</p>
-                <h3> Your Traget is: </h3>
-                <p>{{ target_names}}</p>
-                <h3>The score  is: </h3>
-                <p>{{ score}}</p>
-            </div>
-            <div  class="card section {% if not show_section %}hidden{% endif %}">
-            <table border="1">
-                <thead>
-                  <tr>
-                    <th>Rank</th>
-                    <th>Drug</th>
-                    <th>Target</th>
-                    <th>Score</th>
-                  </tr>
-                </thead>
-                <tbody>
-          
-                    {% for dt in drugTarget %}
+                <h2>Predicted binding scores results:</h2>  
+                <table border="1">
+                    <thead>
                     <tr>
-                      <td>{{ loop.index }}</td>  <!-- loop.index gives 1-based index -->
-                      <td>{{ dt.Drug }}</td>
-                      <td>{{ dt.Target }}</td>
-                      <td>{{ dt.Score }}</td>
+                        <th>Rank</th>
+                        <th>Drug</th>
+                        <th>Target</th>
+                        <th>Score</th>
                     </tr>
-                    {% endfor %}
-          
+                    </thead>
+                    <tbody>
+            
+                        {% for dt in drugTarget %}
+                        <tr>
+                        <td>{{ loop.index }}</td>  <!-- loop.index gives 1-based index -->
+                        <td>{{ dt.Drug }}</td>
+                        <td>{{ dt.Target }}</td>
+                        <td>{{ dt.Score }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
 
-                </tbody>
+                </table>
 
-              </table>
-              </div>
-              <div  class="card section {% if not show_section %}hidden{% endif %}">
+                <form action= "/getMedicalInfo" method="POST">
+                    <h3>What would you like to do next?</h3>
+                    <h4>Provide you with medical info regarding the drug or protein?</h4>
+                    <button type="submit" class="button" name="drugbtn">Drug</button>
+                    <button type="submit" class="button" name="proteinbtn">Protein</button>
+                    <h4>Investigate drug repurpose options?</h4>
+                    <button type="submit" class="button" name="repurposebtn">Repurpose</button>
+
+                </form>
+            </div>
+            <div class="card section {% if not show_section_drug %}hidden{% endif %}">
+                <h2>Medical Info for the drug:</h2>
+                <p>{{ medical_info_drug}}</p>               
+            </div>
+            <div class="card section {% if not show_section_protein %}hidden{% endif %}">
+                <h2>Medical Info for the protein:</h2>
+                <p>{{ medical_info_protein}}</p>               
+            </div>
+
+              <div  class="card section {% if not show_section_repurpose %}hidden{% endif %}">
+                <h2>Drug Repurpose Results:</h2>
                 <table border="1">
                     <thead>
                       <tr>
