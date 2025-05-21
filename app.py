@@ -23,6 +23,7 @@ def getMedicalInfo():
     show_section_protein = session.get("show_section_protein")
     show_section_drug = session.get("show_section_drug")
 
+    proposal = session.get("proposal")
     if request.method == "POST":
 
         try:
@@ -63,7 +64,7 @@ def getMedicalInfo():
             session['show_section_protein'] = show_section_protein
             session['show_section_drug'] = show_section_drug
 
-            return render_template("index.html", medical_info_drug=medical_info_drug,medical_info_protein=medical_info_protein,drugTarget=drugTarget,show_section_drug=show_section_drug,show_section_protein=show_section_protein,show_section_repurpose=show_section_repurpose,show_section=True, drugRepurpose=drugRepurpose)
+            return render_template("index.html", medical_info_drug=medical_info_drug,medical_info_protein=medical_info_protein,drugTarget=drugTarget,show_section_drug=show_section_drug,show_section_protein=show_section_protein,show_section_repurpose=show_section_repurpose,show_section=True, drugRepurpose=drugRepurpose,proposal=proposal)
 
         except Exception as e:
             print(f"Error: {e}")
@@ -78,6 +79,7 @@ def extractDrugNames():
             show_section = True
             proposal = request.form.get('proposal')
             print (proposal)
+            session['proposal'] = proposal
             print ("Testing printing proposal drugs", flush = True)
             #drug_names = "Aspirin"
             drug_names = drug_names_extractor_agent(proposal)
@@ -116,63 +118,7 @@ def extractDrugNames():
             session['drugRepurpose'] = ""
             
 
-            return render_template("index.html", drug_names=drug_names, target_names=target_names, score=score,drugTarget=drugTarget,show_section=show_section)
-        except Exception as e:
-            print(f"Error: {e}")
-            return render_template('wrong_index.html', error=str(e)), 500
-
-    return render_template("index.html")
-
-@app.route('/doRepurpose', methods=["GET", "POST"])
-def doRepurpose():
-    if request.method == "POST":
-        try:
-            show_section = True
-            proposal = request.form.get('proposal')
-            print (proposal)
-            print ("Testing printing proposal drugs", flush = True)
-            drug_names = "Aspirin"
-            #drug_names = drug_names_extractor_agent(proposal)
-            print("\n The proposal is: ")
-            print (proposal)
-            print("\n The drugs you are using in this proposal are: ")
-            print (drug_names)
-            # Call the agent to extract target names
-            target_names = "COX1"
-            #target_names = target_names_extractor_agent(proposal)
-            #print("\n The target proteins that the above drugs are binding to in this proposal are here in app.py: ")
-            print (target_names)
-            #score = prediction_agent(drug_names, target_names)
-            score=2.5
-            print ("Trying repurposeing")
-            result = repurpose_agent(target_names)
-
-            drugRepurpose = []
-            print ("looks like the error is here")
-            for row in result:
-                rank = row[0]  # Index 0 → "Name"
-                dn = row[1]
-                tn = row[2]
-                db_score = row[3]
-                drugRepurpose.append({'Rank': rank,'Drug':dn,'Target':tn,'Score':db_score})
-  # Index 1 → "Age"
-            # return render_template("index.html", drug_names=drug_names, target_names=target_names, score=score)
-        
-            drugTarget = []
-            if isinstance(score, (int, float)):
-                print ("it is a float")
-                #scorelist.append = str(round(score,2))
-                drugTarget.append({'Drug':drug_names,'Target':target_names,'Score':round(score,2)})
-
-            else:
-                for i in range(len(score)):
-                    print ("Item number ")
-                    print (i)
-                    print (target_names[i])
-                    print (score[i])
-                    drugTarget.append({'Drug':drug_names,'Target':target_names.split(",")[i],'Score':round(score[i],2)})
-
-            return render_template("index.html", drug_names=drug_names, target_names=target_names, score=score,show_section=show_section, drugTarget=drugTarget, drugRepurpose = drugRepurpose)
+            return render_template("index.html", drug_names=drug_names, target_names=target_names, score=score,drugTarget=drugTarget,show_section=show_section, proposal = proposal)
         except Exception as e:
             print(f"Error: {e}")
             return render_template('wrong_index.html', error=str(e)), 500
