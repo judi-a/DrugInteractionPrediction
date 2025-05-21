@@ -1,7 +1,7 @@
 from flask import Flask, jsonify, render_template, request, session
 from flask_cors import CORS
 from drug_extractor_agent import drug_names_extractor_agent, target_names_extractor_agent, prediction_agent, repurpose_agent
-from drug_agent import medical_agent
+from drug_agent import medical_agent_drug,medical_agent_target
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # Required for session
@@ -32,11 +32,13 @@ def getMedicalInfo():
             print (drugTarget)
             if 'drugbtn' in request.form:
                 show_section_drug = True
-                medical_info_drug = medical_agent("Aspirin")
+                drug = drugTarget[0]['Drug']
+                medical_info_drug = medical_agent_drug(drug)
                 session['medical_info_drug'] =medical_info_drug
             elif 'proteinbtn' in request.form:
                 show_section_protein = True
-                medical_info_protein = "This is the info regarding protein"
+                target = drugTarget[0]['Target']
+                medical_info_protein = medical_agent_target(target)
                 session['medical_info_protein'] =medical_info_protein
             elif 'repurposebtn' in request.form:
                 show_section_repurpose = True
