@@ -126,14 +126,7 @@ def get_dti_score(drug: str, target: str, is_smiles=False, is_sequence=False) ->
         target_sequence = target
 
     print ("Target sequence is "+ target_sequence)
-    '''try:
-        net = models.model_pretrained(model="MPNN_CNN_BindingDB")
-        print("The model file is ")
-        print (net)
-    except zipfile.BadZipFile:
-        print("Error: The downloaded file is not a valid zip file.")
-        return 0
-    '''
+    
     #load pretrained model on BindingDB
     net = models.model_pretrained('models/model_MPNN_CNN/')
     print ("loaded the model")
@@ -189,29 +182,19 @@ def prediction_agent(drug_names, target_names, is_smiles=False, is_sequence=Fals
     print ("Inside prediction agent, with drugs ", drug_names)
     #print (len(drug_names.split(",")))
     #if len(drug_names.split(",")) == 1:
-    if len(drug_names)==1:
-        print ("one drug", drug_names)
-        if(len(target_names) > 1):
-            print ("multiple targets", target_names)
-            result = get_multiple_dti_scores(drug_names, target_names)
-        else:
-            print ("One single target", target_names)
-            result = get_dti_score(drug_names[0], target_names[0])
-    else:
-        print ("Multiple drugs.....")
+    if len(drug_names)>1:
+        print ("Multiple drugs. Currently not supported. Using only the first one")
+        
+    drug_names=drug_names[0]
 
-    '''
-    print((target_names))
-    print ("their length is ")
-    print (len(target_names.split(",")))
-    if len(target_names.split(",")) > 1: #multiple targets detected 
-        print ("multiple targets, calling get_multiple_dti")
-        multi_targets = target_names.split(",")
-        result = get_multiple_dti_scores(drug_names, multi_targets)
+    if(len(target_names) > 1):
+        print ("multiple targets", target_names)
+        result = get_multiple_dti_scores(drug_names, target_names)
     else:
-        print ("one target, calling get_dti")
-        result = get_dti_score(drug_names, target_names)
-        '''
+        print ("One single target", target_names)
+        result = get_dti_score(drug_names, target_names[0])
+
+
     if result is not None:
         print("Result of DTI analysis:")
         print(result)
@@ -256,8 +239,8 @@ def repurpose_override(repurposeLib, target, target_name,
         X_repurpose, drug_names,_ = load_broad_repurposing_hub_override()
     elif repurposeLib == "antiviral":
         X_repurpose, drug_names = load_antiviral_drugs_override()
-    elif repurposeLib == "ic50":
-        X_repurpose, _, drug_names = load_IC50_1000_Samples()
+    elif repurposeLib == "cancer":
+        X_repurpose, drug_names = load_Cancer_drugs()
     else:
         X_repurpose, _, drug_names = load_antiviral_drugs_override()
 
@@ -419,39 +402,10 @@ def load_antiviral_drugs_override(path = './data'):
     print ("loaded antiviral data")
     return df.SMILES.values, df[' Name'].values
 
-def load_IC50_1000_Samples(path = './data', n=100):
+def load_Cancer_drugs(path = './data'):
     print ("loading IC50 data")
-    df = pd.read_csv(path+"/IC50_samples.csv").sample(n = n, replace = False).reset_index(drop = True)
-    return df['Target Sequence'].values, df['SMILES'].values
-
-'''
-def extractor_call(proposal):
-  #proposal = input("Tell me about your proposal:")
-  # Call the agent to extract drug names
-  drug_names = drug_names_extractor_agent(proposal)
-  print("\n The drugs you are using in this proposal are: ")
-  print (drug_names)
-  # Call the agent to extract target names
-  target_names = target_names_extractor_agent(proposal)
-  print("\n The target proteins that the above drugs are binding to in this proposal are: ")
-  print (target_names)
-  #predict biding score between drug and target
-  if len(targets > 1): #multiple targets detected 
-    multi_targets = targets.split(",")
-    result = get_multiple_dti_scores(drug_names, multi_targets)
-  else:
-     result = get_dti_score(drug_names, target_names)
-  if result is not None:
-    print("Result of DTI analysis:")
-    print(result)
-  else:
-    print("DTI analysis failed due to an error.")
-
-
-  #medical_usage = medical_agent(drug_names)
-  #print("\n These drugs could be helpful in:")
-  #print(medical_usage)
-'''
+    df = pd.read_csv(path+"/cancer_drugs.csv")
+    return df['Smiles'].values, df['Name'].values
 
 
 
