@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Judi A's Drug Predictor Agent</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)),
+                        url("{{ url_for('static', filename='images/drug_background.jpg') }}");
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            min-height: 100vh;
+            color: white;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            padding: 50px 0;
+        }
+
+        .header h1 {
+            font-size: 3em;
+            margin-bottom: 20px;
+        }
+
+        .content {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 15px;
+            margin: 20px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            transition: transform 0.3s ease;
+            
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+
+        .button:hover {
+            background-color: #45a049;
+        }
+       
+        .hidden {
+            display: none;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>AI-Powered Drug-Target Interaction Explorer</h1>
+            </div>
+
+        <div class="content">
+           
+            <div className="max-w-3xl mx-auto p-4 space-y-6">
+                <h1 className="text-3xl font-bold text-center">Description</h1>
+                <p className="text-center text-muted-foreground">
+                <p>Enter a biomedical hypothesis or research proposal. Our AI system will extract drug and protein entities, predict interaction scores, and suggest repurposing options and clinical insights.</p>
+                
+                <p> With this system, you have four agents at your disposal. </p>
+                <p>&nbsp;&nbsp;&nbsp;&nbsp;Agent 1: Extracts the drug and target/protein names from your proposal </p>  
+                <p>&nbsp;&nbsp;&nbsp;&nbsp;Agent 2: Fetches the drug SMILE string, protein Amino Acid sequence, then run an AI model to predict binding score between the drug and the protein</p> 
+                <p>&nbsp;&nbsp;&nbsp;&nbsp;Agent 3: Suggest repurpose drugs for your protein</p>
+                <p>&nbsp;&nbsp;&nbsp;&nbsp;Agent 4: Provides medical insights regarding your drug and protein</p>   
+                <p>Check out the code:
+                <a href=" https://github.com/judi-a/DrugInteractionPrediction" style="color: rgb(102, 184, 77);">View Code on GitHub</a>
+                </p>
+                </div>
+
+
+            <div class="card">
+                <h1>Please enter your proposal</h1>
+                <h2> Or Copy and paste this example in the given textbox: "I think Metformin might inhibit TNF-a"</h2>
+                <form action= "/extractDrugNames" method="POST">
+                    <p><label for="proposal">Make sure your text has a drug name and a target protein:</label></p>
+                    <p><textarea name="proposal" rows="4" cols="50" required>{{proposal}}</textarea></p>
+                    <button type="submit" class="button" >Submit</button>
+                </form>
+            </div>
+        
+            <div  class="card section {% if not show_section %}hidden{% endif %}">
+                <h2>Predicted binding scores results:</h2>  
+                <table border="1">
+                    <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Drug</th>
+                        <th>Target</th>
+                        <th>Score</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+            
+                        {% for dt in drugTarget %}
+                        <tr>
+                        <td>{{ loop.index }}</td>  <!-- loop.index gives 1-based index -->
+                        <td>{{ dt.Drug }}</td>
+                        <td>{{ dt.Target }}</td>
+                        <td>{{ dt.Score }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+
+                </table>
+                <p> This binding score represents the drug's binding affinity to the given protein - a lower score indicates stronger binding</p>
+                <form action= "/getMedicalInfo" method="POST">
+                    <h3>What would you like to do next?</h3>
+                    <h4>Provide you with medical info regarding the drug or protein?</h4>
+                    <button type="submit" class="button" name="drugbtn">Drug</button>
+                    <button type="submit" class="button" name="proteinbtn">Protein</button>
+                    <h4>Investigate drug repurpose options?</h4>
+                    <button type="submit" class="button" name="Generalrepurposebtn">General Repurpose</button>
+
+                        <label for="rep"> Or choose a repurpose library:</label>
+                        <select name="rep" id="rep">
+                            <option value="antiviral">Antiviral</option>
+                            <option value="ic50">IC50</option>
+                        </select>
+                        <button type="submit" class="button" name="specialrepurposebtn">Specialized Repurpose</button>
+                    </form>
+                
+
+
+                </form>
+            </div>
+            <div class="card section {% if not show_section_drug %}hidden{% endif %}">
+                <h2>Medical Info for the drug:</h2>
+                <p>{{ medical_info_drug}}</p>               
+            </div>
+            <div class="card section {% if not show_section_protein %}hidden{% endif %}">
+                <h2>Medical Info for the protein:</h2>
+                <p>{{ medical_info_protein}}</p>               
+            </div>
+
+              <div  class="card section {% if not show_section_repurpose %}hidden{% endif %}">
+                <h2>Drug Repurpose Results:</h2>
+                <table border="1">
+                    <thead>
+                      <tr>
+                        <th>Rank</th>
+                        <th>Drug</th>
+                        <th>Target</th>
+                        <th>Score</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+              
+                        {% for dt in drugRepurpose %}
+                        <tr>
+                          <td>{{ loop.index }}</td>  <!-- loop.index gives 1-based index -->
+                          <td>{{ dt.Drug }}</td>
+                          <td>{{ dt.Target }}</td>
+                          <td>{{ dt.Score }}</td>
+                        </tr>
+                        {% endfor %}
+              
+    
+                    </tbody>
+    
+                  </table>
+                  </div>
+    
+            <div class="card">
+                <h2>Contact Us</h2>
+                <p>Email: judi.abdelrazik@gmail.com</p>
+                    <a href="  https://www.linkedin.com/in/judi-abdelrazik-30338129a/" style="color: rgb(102, 184, 77);">LinkedIn</a>
+              
+            </div>
+            
+        </div>
+    </div>
+</body>
+</html>
+
+

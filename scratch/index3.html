@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Docker Function Test</title>
+</head>
+<body>
+    <h1>Call Function in Docker</h1>
+    <button onclick="callFunction()">Call Function</button>
+    <button onclick="callFunction2()">Call Function2</button>
+  
+    <p id="result"></p>
+
+    <h1>Enter Text</h1>
+    <form method="POST">
+        <label for="user_text">Your Text:</label>
+        <input type="text" id="user_text" name="user_text" required>
+        <button type="submit" onclick="callFunction2()">Submit</button>
+    </form>
+    <h2>Result:</h2>
+    <p>{{ result }}</p>
+
+
+
+
+    <script>
+        async function callFunction() {
+            const response = await fetch('http://localhost:9999/api/myfunction');
+            const data = await response.json();
+            document.getElementById('result').innerText = data.message;
+        }
+
+        async function callFunction2() {
+            const response = await fetch('http://localhost:9999/api/myfunction2');
+            const data = await response.json();
+            document.getElementById('result').innerText = data.message;
+        }
+       
+    </script>
+
+
+
+</body>
+</html>
