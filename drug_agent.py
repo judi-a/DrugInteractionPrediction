@@ -128,7 +128,11 @@ def get_dti_score(drug: str, target: str, is_smiles=False, is_sequence=False) ->
     print ("Target sequence is "+ target_sequence)
     
     #load pretrained model on BindingDB
-    net = models.model_pretrained('models/model_MPNN_CNN/')
+    #net = models.model_pretrained('models/model_MPNN_CNN/') #
+    net = models.model_pretrained('models/model_Morgan_AAC/')
+
+    
+
     print ("loaded the model")
     #Use the broad data to get the drug SMILE 
     X_repurpose, drug_name, drug_cid = load_broad_repurposing_hub_override("./data")

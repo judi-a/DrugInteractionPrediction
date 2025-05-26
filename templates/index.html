@@ -84,11 +84,15 @@
             <div className="max-w-3xl mx-auto p-4 space-y-6">
                 <h1 className="text-3xl font-bold text-center">Description</h1>
                 <p className="text-center text-muted-foreground">
-                <p>Enter a biomedical hypothesis or research proposal. Our AI system will extract drug and protein entities, predict interaction scores, and suggest repurposing options and clinical insights.</p>
+                <p>Enter a biomedical hypothesis or research proposal. Our AI system will extract drug and protein entities, predict interaction scores, and suggest repurposing options and clinical insights.
+                The backend for this system is a combination of OpenAI and 
+                    <a href="https://github.com/kexinhuang12345/DeepPurpose" style="color: rgb(102, 184, 77);">DeepPurpose</a>
+                    package
+                </p>
                 
                 <p> With this system, you have four agents at your disposal. </p>
                 <p>&nbsp;&nbsp;&nbsp;&nbsp;Agent 1: Extracts the drug and target/protein names from your proposal </p>  
-                <p>&nbsp;&nbsp;&nbsp;&nbsp;Agent 2: Fetches the drug SMILE string, protein Amino Acid sequence, then run an AI model to predict binding score between the drug and the protein</p> 
+                <p>&nbsp;&nbsp;&nbsp;&nbsp;Agent 2: Fetches the drug SMILE string, protein Amino Acid sequence, then run an AI model to predict binding score between the drug and the protein.</p> 
                 <p>&nbsp;&nbsp;&nbsp;&nbsp;Agent 3: Suggest repurpose drugs for your protein</p>
                 <p>&nbsp;&nbsp;&nbsp;&nbsp;Agent 4: Provides medical insights regarding your drug and protein</p>   
                 <p>Check out the code:
