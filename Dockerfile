@@ -14,7 +14,6 @@ SHELL ["conda", "run","-n", "python_env", "/bin/bash", "-c"]
 RUN pip install --no-cache-dir git+https://github.com/bp-kelley/descriptastorus "flaml[automl]"
 
 
-
 #RUN rm /bin/sh && ln -s /bin/bash /bin/sh
 
 COPY . /app
