@@ -2,6 +2,7 @@ from flask import Flask, jsonify, render_template, request, session
 from flask_cors import CORS
 from drug_extractor_agent import drug_names_extractor_agent, target_names_extractor_agent, prediction_agent, repurpose_agent
 from drug_agent import medical_agent_drug,medical_agent_target
+from drug_agent import load_broad_repurposing_hub_override, load_antiviral_drugs_override,load_IC50_1000_Samples
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # Required for session
@@ -30,6 +31,7 @@ def getMedicalInfo():
             drugTarget = session.get('drugTarget') 
             print ("Drug names is")
             print (drugTarget)
+
             if 'drugbtn' in request.form:
                 show_section_drug = True
                 drug = drugTarget[0]['Drug']
@@ -38,16 +40,19 @@ def getMedicalInfo():
             elif 'proteinbtn' in request.form:
                 show_section_protein = True
                 target = drugTarget[0]['Target']
-                medical_info_protein = medical_agent_target(target)
+                medical_info_protein =  medical_agent_target(target)
                 session['medical_info_protein'] =medical_info_protein
-            elif 'repurposebtn' in request.form:
+            elif 'Generalrepurposebtn' in request.form:
                 show_section_repurpose = True
                 target = drugTarget[0]['Target']
                 #modify this part
+                print ("This is the general repurpose library")
+                #drugRepurpose.append({'Rank': 1,'Drug':"dn",'Target':target,'Score':2.5})
+                #drugRepurpose.append({'Rank': 2,'Drug':"dn2",'Target':target,'Score':3.5})
                 
-                drugRepurpose.append({'Rank': 1,'Drug':"dn",'Target':target,'Score':2.5})
-                drugRepurpose.append({'Rank': 2,'Drug':"dn2",'Target':target,'Score':3.5})
-                '''result = repurpose_agent(target)
+                
+                repurposeLib = "broad"   #change to broad
+                result = repurpose_agent(target, repurposeLib)
                 drugRepurpose = []
                 for row in result:
                     rank = row[0]  # Index 0 → "Name"
@@ -55,7 +60,35 @@ def getMedicalInfo():
                     tn = row[2]
                     db_score = row[3]
                     drugRepurpose.append({'Rank': rank,'Drug':dn,'Target':tn,'Score':db_score})
-                '''
+                
+                session['drugRepurpose'] = drugRepurpose
+            elif 'specialrepurposebtn' in request.form:
+                show_section_repurpose = True
+                target = drugTarget[0]['Target']
+                #modify this part
+                print ("This is the specialized repurpose library")
+                #drugRepurpose.append({'Rank': 1,'Drug':"dn",'Target':target,'Score':2.5})
+                #drugRepurpose.append({'Rank': 2,'Drug':"dn2",'Target':target,'Score':3.5})
+                
+                selected_repurpose_lib = request.form.get('rep')
+                print("Selected repurpose library:", selected_repurpose_lib)
+                if selected_repurpose_lib == "antiviral":
+                    print ("will use antiviral rep")
+                    repurposeLib = "antiviral"
+                elif selected_repurpose_lib == "ic50":
+                    print ("will use ic50 library")
+                    repurposeLib = "ic50"
+
+                
+                result = repurpose_agent(target,repurposeLib)
+                drugRepurpose = []
+                for row in result:
+                    rank = row[0]  # Index 0 → "Name"
+                    dn = row[1]
+                    tn = row[2]
+                    db_score = row[3]
+                    drugRepurpose.append({'Rank': rank,'Drug':dn,'Target':tn,'Score':db_score})
+                
                 session['drugRepurpose'] = drugRepurpose
             
             medical_info_drug = session.get("medical_info_drug")
@@ -78,6 +111,8 @@ def getMedicalInfo():
 def extractDrugNames():
     if request.method == "POST":
         try:
+            print ("In extract drug name")
+
             show_section = True
             proposal = request.form.get('proposal')
             print (proposal)
@@ -117,7 +152,7 @@ def extractDrugNames():
             session['show_section_drug'] = False
             session['medical_info_drug'] = ""
             session['medical_info_protein'] = ""
-            session['drugRepurpose'] = ""
+            session['drugRepurpose'] = "" 
             
 
             return render_template("index.html", drug_names=drug_names, target_names=target_names, score=score,drugTarget=drugTarget,show_section=show_section, proposal = proposal)

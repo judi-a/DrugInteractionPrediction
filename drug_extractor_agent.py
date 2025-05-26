@@ -22,6 +22,7 @@ client = OpenAI()
 
 def drug_names_extractor_agent(text):
 
+
   response = client.chat.completions.create(
       model="gpt-4-0613",
       messages=[
@@ -199,7 +200,7 @@ def prediction_agent(drug_names: str, target_names: str, is_smiles=False, is_seq
 
     ####
  
-def repurpose_agent(target_names):
+def repurpose_agent(target_names, repurposeLib = "antiviral"):
     print((target_names))
     print ("their length is ")
     print (len(target_names.split(",")))
@@ -211,13 +212,13 @@ def repurpose_agent(target_names):
         print ("one target")
         target_sequence = get_target_sequence( target_names)
         print (target_sequence)
-        result = repurpose_override(target = target_sequence, target_name=target_names)
+        result = repurpose_override(repurposeLib,target = target_sequence, target_name=target_names)
         print ("Done with repurpose")
         print (result)
         return result
     
 
-def repurpose_override(target, target_name,
+def repurpose_override(repurposeLib, target, target_name,
                        finetune_epochs = 10,
 					finetune_LR = 0.001,
 					finetune_batch_size = 32,
@@ -229,7 +230,16 @@ def repurpose_override(target, target_name,
 					agg = 'agg_mean_max',
 					output_len = 30):
     
-    X_repurpose, _, drug_names = load_broad_repurposing_hub_override()
+    if repurposeLib == "broad":
+        X_repurpose, _, drug_names = load_broad_repurposing_hub_override()
+    elif repurposeLib == "antiviral":
+        X_repurpose, _, drug_names = load_antiviral_drugs_override()
+    elif repurposeLib == "ic50":
+        X_repurpose, _, drug_names = load_IC50_1000_Samples()
+    else:
+        X_repurpose, _, drug_names = load_antiviral_drugs_override()
+
+
 
     pretrained_model_names = ['model_MPNN_CNN'] #, 'model_CNN_CNN']
     #pretrained_model_names = [['MPNN', 'CNN'], ['CNN','CNN'], ['Morgan', 'CNN'], ['Morgan', 'AAC'], ['Daylight', 'AAC']]
@@ -354,6 +364,17 @@ def load_broad_repurposing_hub_override(path = './data'):
     print ("loaded broad data")
     df = df.fillna('UNK')
     return df.smiles.values, df.title.values, df.cid.values.astype(str)
+
+def load_antiviral_drugs_override(path = './data'):
+    print ("loading antiviral")
+    df = pd.read_csv(path+"/antiviral_drugs.tab", sep = '\t')
+    print ("loaded antiviral data")
+    return df.SMILES.values, df[' Name'].values, df['Pubchem CID'].values
+
+def load_IC50_1000_Samples(path = './data', n=100):
+    print ("loading IC50 data")
+    df = pd.read_csv(path+"/IC50_samples.csv").sample(n = n, replace = False).reset_index(drop = True)
+    return df['Target Sequence'].values, df['SMILES'].values
 
 
 def extractor_call(proposal):
