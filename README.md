@@ -8,9 +8,21 @@ In addition, protein and drug name extraction prompts were optimized and validat
 
 Web server deployment is available here: https://druginteraction-280377787251.us-central1.run.app
 
+## Overview
+
+The main task of this AI agent is to facilitate the drug discovery process. Understanding how drug interacts with other proteins and molecules helps developing effective treatments for diseases while minimizing side effects. 
+
+This script utilizes OpenAI's API to extract information from text, including drug and target names, and to predict drug-target interaction (DTI) scores using pretrained models from the DeepPurpose library. Additionally, it fetches amino acid sequences for target proteins and provides general medical information on drugs.
+
+This agent asks the user to input a proposal of the experiment they are working on. 
+1. The first step is that it calls two extractor agents; one to extract the drug name and the other to extract the protein name from the experiment proposal.
+2. In order to predict interaction, one needs to get the 3D structure of the interacting molecules. For drugs, this is represented by the SMILE sequence. For protein, the amino acid sequence is used. Therefore, two other agents are called to extract the SMILE sequence and the amino acid sequences of both the drug and the protein.
+3. Finally, the prediction agent loads a pretrained model, that was already trained on drug protein interaciton data in the other project (DrugInteraction). It then predicts the binding interatction between the given drug and target
+
+4. There is also a medical agent that provides explanation on how the drugs are used
 Code is packaged within a Docker image.
 
-How to run:
+##How to run:
 1. Clone the repo
 2. Add your openAI key to your Dockerfile ENV OPENAI_API_KEY="XXXX"
 3. Build your docker image using the following command:
