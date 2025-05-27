@@ -22,7 +22,7 @@ This agent asks the user to input a proposal of the experiment they are working 
 4. There is also a medical agent that provides explanation on how the drugs are used
 Code is packaged within a Docker image.
 
-##How to run:
+## How to run:
 1. Clone the repo
 2. Add your openAI key to your Dockerfile ENV OPENAI_API_KEY="XXXX"
 3. Build your docker image using the following command:
